@@ -1,0 +1,34 @@
+schemas -
+(under event database) Event - Event no., club_name, event_name, id, date, time, venue, type(hackathon, carnival, exhibition, etc.), users_registered, photos, prmsg, website
+
+User - name ,sapid, email, phonenumber, year, class, 
+
+Venues - class_id, event_id, booked, event_name, dates.
+
+Club - club_name, club_id, events, past_events, upcoming_events, ongoing, members, faculty, updates, phonenumber ,email, poc_phone , poc_email.
+
+Faculty - id, clubs
+
+Notifications - event, event_info, time left, links to pages.
+
+(under event database) users_registered -> event name, user info.
+
+Pages:
+Landing page -> navbar-> login register, about, all_events, notifications.
+             -> event carousel -> ongoing and upcoming -> event_info -> user_regiform-> mails and notifications.
+             ->user dashboard.
+
+user_regiform-> event_info , form fields - team/duo/solo, events_registered if loggedIn? autofill : loginpage-> update in user dashboard + users_registered, send mail  
+
+Register/login as user -> home page 
+"" ""           as club member-> club_dashboard.
+"" ""           as college -> college_dashboard.
+
+user_dashboard -> events registered, interview_tracker.
+club_dashboard -> setup and events info, count, updates, venue booking.
+college_dashboard -> clubs_info, events -> venue_booker , updates -> approval/ disapproval.
+
+counter ,teammates , option for solo/duo/team, venue and faculty manager
+cards carousel animation.
+custom mail option in setup form.
+otp on login.

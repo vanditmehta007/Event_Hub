@@ -1,0 +1,34 @@
+const mongoose=require('mongoose');
+const userSchema = new mongoose.Schema({
+    uname:{
+        type:String,
+        required:true
+    },
+
+    udepartment:{
+        type:String,
+        required:true
+    },
+    usapid:{
+        type:String,
+        required:true,
+        unique:true
+    },
+    uemail:{
+        type:String,
+        required:true,
+        unique:true
+    },
+    uphonenumber:{
+        type:String,
+        required:true,
+        unique:true,
+    },
+    hashedPassword:{
+        type:String,
+        required:true,
+    }
+}, {timestamps:true});
+
+const user = mongoose.model('Users',userSchema);
+module.exports=user;
