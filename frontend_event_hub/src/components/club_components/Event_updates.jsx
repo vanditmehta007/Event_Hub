@@ -4,13 +4,27 @@ import { toast } from 'react-hot-toast';
 
 const Event_updates = () => {
   const [updateText, setUpdateText] = useState('');
-  const [currentUpdate, setCurrentUpdate] = useState({ _id: '', update_text: 'No Updates' });
+  const [currentUpdate, setCurrentUpdate] = useState({ _id: '', update_text: 'No Updates', event_name: 'General' });
   const [loading, setLoading] = useState(true);
+  const [events, setEvents] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState('General');
 
   // Fetch current update when component mounts
   useEffect(() => {
     fetchCurrentUpdate();
+    fetchClubEvents();
   }, []);
+
+  const fetchClubEvents = async () => {
+    try {
+      const res = await axios.get('/club/events-stats'); // Reusing existing endpoint to get event names
+      if (res.data.success) {
+        setEvents(res.data.events);
+      }
+    } catch (error) {
+      console.error("Failed to fetch events for dropdown", error);
+    }
+  };
 
   const fetchCurrentUpdate = async () => {
     try {
@@ -36,7 +50,10 @@ const Event_updates = () => {
     }
 
     try {
-      const { data } = await axios.post('/club-update', { update_text: updateText });
+      const { data } = await axios.post('/club-update', {
+        update_text: updateText,
+        event_name: selectedEvent
+      });
       if (data.success) {
         toast.success('Update posted successfully');
         setUpdateText('');
@@ -57,7 +74,7 @@ const Event_updates = () => {
       const { data } = await axios.delete(`/club-update/${currentUpdate._id}`);
       if (data.success) {
         toast.success('Update deleted successfully');
-        setCurrentUpdate({ _id: '', update_text: 'No Updates' });
+        setCurrentUpdate({ _id: '', update_text: 'No Updates', event_name: 'General' });
       } else {
         toast.error(data.error);
       }
@@ -78,11 +95,16 @@ const Event_updates = () => {
   return (
     <div className="bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto">
       <h2 className="text-2xl font-semibold text-gray-800 mb-4">Event Updates</h2>
-      
+
       {/* Current Update Display */}
       <div className="mb-6">
         <h3 className="text-lg font-medium text-gray-700 mb-2">Current Update</h3>
         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-xs font-semibold px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
+              {currentUpdate.event_name || 'General'}
+            </span>
+          </div>
           <p className="text-gray-800">{currentUpdate.update_text}</p>
           {currentUpdate._id && (
             <button
@@ -97,6 +119,26 @@ const Event_updates = () => {
 
       {/* New Update Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
+
+        <div>
+          <label htmlFor="event-select" className="block text-sm font-medium text-gray-700 mb-1">
+            Select Event (Optional)
+          </label>
+          <select
+            id="event-select"
+            value={selectedEvent}
+            onChange={(e) => setSelectedEvent(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+          >
+            <option value="General">General (No specific event)</option>
+            {events.map(event => (
+              <option key={event._id} value={event.ename}>
+                {event.ename}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div>
           <label htmlFor="update" className="block text-sm font-medium text-gray-700 mb-1">
             New Update

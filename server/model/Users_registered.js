@@ -28,6 +28,9 @@ const usersRegisteredSchema = new mongoose.Schema({
   about_yourself: {
     type: String,
   },
+  custom_responses: {
+    type: mongoose.Schema.Types.Mixed // Allows storing arbitrary key-value pairs
+  }
 }, { timestamps: true });
 
 // Add a compound index to prevent duplicate entries

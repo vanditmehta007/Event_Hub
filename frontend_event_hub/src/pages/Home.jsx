@@ -3,11 +3,11 @@ import All_events from "./All_events";
 
 
 export default function Home() {
-    return(
+    return (
         <>
-        <div className="flex flex-col min-h-screen text-white">
-        <All_events/>
-</div>
+            <div className="flex flex-col min-h-screen text-white">
+                <All_events />
+            </div>
         </>
     )
 }

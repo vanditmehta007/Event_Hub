@@ -23,7 +23,8 @@ export default function Register() {
     cname: '',
     cdepartment: '',
     cpassword: '',
-    cid: ''
+    cid: '',
+    cemail: ''
   });
 
   useEffect(() => {
@@ -35,7 +36,7 @@ export default function Register() {
       }
     }
   }, [user, loading, navigate]);
-  
+
   const registerUser = async (e) => {
     e.preventDefault();
     const { uname, uemail, upassword, usapid, uphonenumber, udepartment } = udata;
@@ -56,9 +57,9 @@ export default function Register() {
 
   const registerClub = async (e) => {
     e.preventDefault();
-    const { cname, cdepartment, cpassword, cid } = cdata;
+    const { cname, cdepartment, cpassword, cid, cemail } = cdata;
     try {
-      const { data: responseData } = await axios.post('/cregister', { cname, cdepartment, cpassword, cid });
+      const { data: responseData } = await axios.post('/cregister', { cname, cdepartment, cpassword, cid, cemail });
       if (responseData.error) {
         toast.error(responseData.error);
       } else if (responseData.requiresOTP) {
@@ -75,20 +76,35 @@ export default function Register() {
   const verifyOTP = async (e) => {
     e.preventDefault();
     try {
-      const { data: responseData } = await axios.post('/verify-club-otp', { 
-        cid: pendingClubId, 
-        otp: otp 
+      const { data: responseData } = await axios.post('/verify-club-otp', {
+        cid: pendingClubId,
+        otp: otp
       });
-      
+
       if (responseData.error) {
         toast.error(responseData.error);
       } else {
-        setcData({ cname: '', cpassword: '', cid: '', cdepartment: '' });
+        // Store club info in localStorage for the dashboard
+        if (responseData.club) {
+          localStorage.setItem('club', JSON.stringify(responseData.club));
+        }
+
+        // Store token if provided
+        if (responseData.token) {
+          localStorage.setItem('token', responseData.token);
+        }
+
+        setcData({ cname: '', cpassword: '', cid: '', cdepartment: '', cemail: '' });
         setShowOTPModal(false);
         setOTP('');
         setPendingClubId(null);
-        toast.success('Registration successful. Please login.');
-        navigate('/login');
+
+        toast.success('Permission Requested to Admin');
+
+        // Redirect to club dashboard instead of login
+        setTimeout(() => {
+          navigate('/clubdash');
+        }, 3000);
       }
     } catch (error) {
       console.error('error:', error);
@@ -96,75 +112,75 @@ export default function Register() {
     }
   };
 
- 
-    // OTP Modal component
+
+  // OTP Modal component
   const OTPModal = () => {
     if (!showOTPModal) return null;
-    
+
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
         <div className="bg-white p-8 rounded-xl shadow-lg w-96">
-        <h2 className="text-xl font-bold mb-4">OTP Verification</h2>
-        <form onSubmit={verifyOTP} className="flex flex-col gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Enter OTP</label>
-            <div className="flex gap-2 justify-center">
-              {[...Array(6)].map((_, index) => (
-                <input
-                  key={index}
-                  type="text"
-                  maxLength="1"
-                  value={otp[index] || ''}
-                  onChange={(e) => {
-                    const newOtp = otp.split('');
-                    newOtp[index] = e.target.value;
-                    const newOtpString = newOtp.join('');
-                    setOTP(newOtpString);
-                    
-                    // Auto-focus next input if a digit was entered
-                    if (e.target.value && index < 5) {
-                      const nextInput = e.target.parentElement.nextElementSibling?.querySelector('input');
-                      if (nextInput) nextInput.focus();
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    // Handle backspace
-                    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-                      const prevInput = e.target.parentElement.previousElementSibling?.querySelector('input');
-                      if (prevInput) {
-                        prevInput.focus();
-                        e.preventDefault();
+          <h2 className="text-xl font-bold mb-4">OTP Verification</h2>
+          <form onSubmit={verifyOTP} className="flex flex-col gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Enter OTP</label>
+              <div className="flex gap-2 justify-center">
+                {[...Array(6)].map((_, index) => (
+                  <input
+                    key={index}
+                    type="text"
+                    maxLength="1"
+                    value={otp[index] || ''}
+                    onChange={(e) => {
+                      const newOtp = otp.split('');
+                      newOtp[index] = e.target.value;
+                      const newOtpString = newOtp.join('');
+                      setOTP(newOtpString);
+
+                      // Auto-focus next input if a digit was entered
+                      if (e.target.value && index < 5) {
+                        const nextInput = e.target.parentElement.nextElementSibling?.querySelector('input');
+                        if (nextInput) nextInput.focus();
                       }
-                    }
-                  }}
-                  className="w-12 h-12 text-center text-xl font-semibold border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              ))}
+                    }}
+                    onKeyDown={(e) => {
+                      // Handle backspace
+                      if (e.key === 'Backspace' && !otp[index] && index > 0) {
+                        const prevInput = e.target.parentElement.previousElementSibling?.querySelector('input');
+                        if (prevInput) {
+                          prevInput.focus();
+                          e.preventDefault();
+                        }
+                      }
+                    }}
+                    className="w-12 h-12 text-center text-xl font-semibold border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              className="flex-1 py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75"
-            >
-              Verify OTP
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setShowOTPModal(false);
-                setOTP('');
-                setPendingClubId(null);
-              }}
-              className="flex-1 py-2 px-4 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                className="flex-1 py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75"
+              >
+                Verify OTP
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowOTPModal(false);
+                  setOTP('');
+                  setPendingClubId(null);
+                }}
+                className="flex-1 py-2 px-4 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
     );
   };
 
@@ -189,114 +205,123 @@ export default function Register() {
       <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="bg-white p-8 rounded-xl shadow-lg">
-        
-          <div className="flex border-b border-gray-200 mb-6">
-            <button
-              onClick={() => setView('user')}
-              className={`flex-1 py-3 text-center font-semibold ${
-                view === 'user'
+
+            <div className="flex border-b border-gray-200 mb-6">
+              <button
+                onClick={() => setView('user')}
+                className={`flex-1 py-3 text-center font-semibold ${view === 'user'
                   ? 'border-b-2 border-blue-600 text-blue-600'
                   : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Register as User
-            </button>
-            <button
-              onClick={() => setView('club')}
-              className={`flex-1 py-3 text-center font-semibold ${
-                view === 'club'
+                  }`}
+              >
+                Register as User
+              </button>
+              <button
+                onClick={() => setView('club')}
+                className={`flex-1 py-3 text-center font-semibold ${view === 'club'
                   ? 'border-b-2 border-blue-600 text-blue-600'
                   : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Register as Club
-            </button>
-          </div>
-
-          {/* User Registration Form */}
-          <div className={view === 'user' ? 'block' : 'hidden'}>
-            <form onSubmit={registerUser} className="flex flex-col gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Name</label>
-                <input type='text' placeholder='Your full name' value={udata.uname} onChange={(e) => setuData({ ...udata, uname: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <input type='email' placeholder='you@example.com' value={udata.uemail} onChange={(e) => setuData({ ...udata, uemail: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">SAP ID</label>
-                <input type='text' placeholder='11-digit SAP ID' value={udata.usapid} onChange={(e) => setuData({ ...udata, usapid: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Phone Number</label>
-                <input type='text' placeholder='Your phone number' value={udata.uphonenumber} onChange={(e) => setuData({ ...udata, uphonenumber: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                <div className="flex items-center gap-4">
-                  <RadioInput label="Comps" value="COMPS" name="udepartment" checked={udata.udepartment === 'COMPS'} onChange={(e) => { setuData({ ...udata, udepartment: e.target.value }) }} />
-                  <RadioInput label="IT" value="IT" name="udepartment" checked={udata.udepartment === 'IT'} onChange={(e) => { setuData({ ...udata, udepartment: e.target.value }) }} />
-                  <RadioInput label="AIDS" value="AIDS" name="udepartment" checked={udata.udepartment === 'AIDS'} onChange={(e) => { setuData({ ...udata, udepartment: e.target.value }) }} />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Password</label>
-                <input type='password' placeholder='Min 6 characters' value={udata.upassword} onChange={(e) => setuData({ ...udata, upassword: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-              </div>
-              <button type='submit' className="mt-4 w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75">
-                Register
+                  }`}
+              >
+                Register as Club
               </button>
-            </form>
-          </div>
+            </div>
 
-          {/* Club Registration Form */}
-          <div className={view === 'club' ? 'block' : 'hidden'}>
-            <form onSubmit={registerClub} className="flex flex-col gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Club Name</label>
-                <input type='text' placeholder='Your club name' value={cdata.cname} onChange={(e) => setcData({ ...cdata, cname: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Club ID</label>
-                <input type='text' placeholder='Your club ID' value={cdata.cid} onChange={(e) => setcData({ ...cdata, cid: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Club Department</label>
-                <div className="flex items-center gap-4">
-                  <RadioInput label="Comps" value="COMPS" name="cdepartment" checked={cdata.cdepartment === 'COMPS'} onChange={(e) => { setcData({ ...cdata, cdepartment: e.target.value }) }} />
-                  <RadioInput label="IT" value="IT" name="cdepartment" checked={cdata.cdepartment === 'IT'} onChange={(e) => { setcData({ ...cdata, cdepartment: e.target.value }) }} />
-                  <RadioInput label="AIDS" value="AIDS" name="cdepartment" checked={cdata.cdepartment === 'AIDS'} onChange={(e) => { setcData({ ...cdata, cdepartment: e.target.value }) }} />
+            {/* User Registration Form */}
+            <div className={view === 'user' ? 'block' : 'hidden'}>
+              <form onSubmit={registerUser} className="flex flex-col gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Name</label>
+                  <input type='text' placeholder='Your full name' value={udata.uname} onChange={(e) => setuData({ ...udata, uname: e.target.value })}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Password</label>
-                <input type='password' placeholder='Min 6 characters' value={cdata.cpassword} onChange={(e) => setcData({ ...cdata, cpassword: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-              </div>
-              <button type='submit' className="mt-4 w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75">
-                Register
-              </button>
-            </form>
-          </div>
-        </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Email</label>
+                  <input type='email' placeholder='you@example.com' value={udata.uemail} onChange={(e) => setuData({ ...udata, uemail: e.target.value })}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">SAP ID</label>
+                  <input type='password' placeholder='11-digit SAP ID' value={udata.usapid} onChange={(e) => setuData({ ...udata, usapid: e.target.value })}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+                  <input type='text' placeholder='Your phone number' value={udata.uphonenumber} onChange={(e) => setuData({ ...udata, uphonenumber: e.target.value })}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <RadioInput label="Comps" value="COMPS" name="udepartment" checked={udata.udepartment === 'COMPS'} onChange={(e) => { setuData({ ...udata, udepartment: e.target.value }) }} />
+                    <RadioInput label="IT" value="IT" name="udepartment" checked={udata.udepartment === 'IT'} onChange={(e) => { setuData({ ...udata, udepartment: e.target.value }) }} />
+                    <RadioInput label="AIDS" value="AIDS" name="udepartment" checked={udata.udepartment === 'AIDS'} onChange={(e) => { setuData({ ...udata, udepartment: e.target.value }) }} />
+                    <RadioInput label="EXTC" value="EXTC" name="udepartment" checked={udata.udepartment === 'EXTC'} onChange={(e) => { setuData({ ...udata, udepartment: e.target.value }) }} />
+                    <RadioInput label="MECH" value="MECH" name="udepartment" checked={udata.udepartment === 'MECH'} onChange={(e) => { setuData({ ...udata, udepartment: e.target.value }) }} />
+                    <RadioInput label="CHEM" value="CHEM" name="udepartment" checked={udata.udepartment === 'CHEM'} onChange={(e) => { setuData({ ...udata, udepartment: e.target.value }) }} />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Password</label>
+                  <input type='password' placeholder='Min 6 characters' value={udata.upassword} onChange={(e) => setuData({ ...udata, upassword: e.target.value })}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                </div>
+                <button type='submit' className="mt-4 w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75">
+                  Register
+                </button>
+              </form>
+            </div>
 
-        {/* Links below the card */}
-        <div className="text-center mt-4 text-sm">
-          <Link to="/" className="text-blue-600 hover:underline">
-            Go home..
-          </Link>
-          <span className="text-gray-500 mx-2">|</span>
-          <Link to="/login" className="text-blue-600 hover:underline">
-            Already have an account? Login
-          </Link>
+            {/* Club Registration Form */}
+            <div className={view === 'club' ? 'block' : 'hidden'}>
+              <form onSubmit={registerClub} className="flex flex-col gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Club Name</label>
+                  <input type='text' placeholder='Your club name' value={cdata.cname} onChange={(e) => setcData({ ...cdata, cname: e.target.value })}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Club Email</label>
+                  <input type='email' placeholder='club@example.com' value={cdata.cemail} onChange={(e) => setcData({ ...cdata, cemail: e.target.value })}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Club ID</label>
+                  <input type='password' placeholder='Your club ID' value={cdata.cid} onChange={(e) => setcData({ ...cdata, cid: e.target.value })}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Club Department</label>
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <RadioInput label="Comps" value="COMPS" name="cdepartment" checked={cdata.cdepartment === 'COMPS'} onChange={(e) => { setcData({ ...cdata, cdepartment: e.target.value }) }} />
+                    <RadioInput label="IT" value="IT" name="cdepartment" checked={cdata.cdepartment === 'IT'} onChange={(e) => { setcData({ ...cdata, cdepartment: e.target.value }) }} />
+                    <RadioInput label="AIDS" value="AIDS" name="cdepartment" checked={cdata.cdepartment === 'AIDS'} onChange={(e) => { setcData({ ...cdata, cdepartment: e.target.value }) }} />
+                    <RadioInput label="EXTC" value="EXTC" name="cdepartment" checked={cdata.cdepartment === 'EXTC'} onChange={(e) => { setcData({ ...cdata, cdepartment: e.target.value }) }} />
+                    <RadioInput label="MECH" value="MECH" name="cdepartment" checked={cdata.cdepartment === 'MECH'} onChange={(e) => { setcData({ ...cdata, cdepartment: e.target.value }) }} />
+                    <RadioInput label="CHEM" value="CHEM" name="cdepartment" checked={cdata.cdepartment === 'CHEM'} onChange={(e) => { setcData({ ...cdata, cdepartment: e.target.value }) }} />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Password</label>
+                  <input type='password' placeholder='Min 6 characters' value={cdata.cpassword} onChange={(e) => setcData({ ...cdata, cpassword: e.target.value })}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                </div>
+                <button type='submit' className="mt-4 w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75">
+                  Register
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Links below the card */}
+          <div className="text-center mt-4 text-sm">
+            <Link to="/" className="text-blue-600 hover:underline">
+              Go home..
+            </Link>
+            <span className="text-gray-500 mx-2">|</span>
+            <Link to="/login" className="text-blue-600 hover:underline">
+              Already have an account? Login
+            </Link>
           </div>
         </div>
       </div>

@@ -27,6 +27,18 @@ const userSchema = new mongoose.Schema({
     hashedPassword:{
         type:String,
         required:true,
+    },
+    isApproved:{
+        type:Boolean,
+        default:false
+    },
+    isApprovedForLogin:{
+        type:Boolean,
+        default:false
+    },
+    approvedAt:{
+        type:Date,
+        default:null
     }
 }, {timestamps:true});
 

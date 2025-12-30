@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 
-import axios from 'axios'; 
+import axios from 'axios';
+import PaperPlaneAnimation from '../../components/PaperPlaneAnimation';
 
 const Event_RegiForm = ({ event_name }) => {
   const [formConfig, setFormConfig] = useState(null);
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-console.log(event_name);
+  const [showAnimation, setShowAnimation] = useState(false);
+  console.log(event_name);
 
   useEffect(() => {
     if (!event_name) {
@@ -18,8 +20,8 @@ console.log(event_name);
     const fetchFormConfig = async () => {
       try {
 
-        const res = await axios.get(`/event-form/${event_name}`); 
-        
+        const res = await axios.get(`/event-form/${event_name}`);
+
         console.log("Response:", res.data); // Debug log
 
         if (res.data && res.data.success) {
@@ -51,10 +53,13 @@ console.log(event_name);
     try {
 
       const res = await axios.post(`/userregevent`, {
-        ...formData, 
-        event_name: event_name 
-      }); 
+        ...formData,
+        event_name: event_name
+      });
       console.log(res.data);
+      if (res.data.success || res.status === 200) {
+        setShowAnimation(true);
+      }
     } catch (err) {
       console.error(err);
       alert("Error submitting form.");
@@ -66,6 +71,10 @@ console.log(event_name);
   if (error) return <p style={{ color: "red" }}>{error}</p>;
 
   if (!formConfig || !formConfig.selectedFields) return <p>No form configuration found.</p>;
+
+  if (showAnimation) {
+    return <PaperPlaneAnimation onComplete={() => setShowAnimation(false)} />;
+  }
 
   return (
     <div className="p-4 max-w-md mx-auto">
@@ -110,6 +119,32 @@ console.log(event_name);
             rows="3" required
           />
         )}
+
+        {/* Custom Fields */}
+        {formConfig.custom_fields && formConfig.custom_fields.map((field, index) => (
+          <div key={index} className="flex flex-col">
+            <label className="text-sm font-medium text-gray-700 mb-1">{field.label}</label>
+            {field.type === 'textarea' ? (
+              <textarea
+                name={field.name}
+                placeholder={field.label}
+                required={field.required}
+                onChange={handleChange}
+                className="border p-2 rounded"
+                rows="3"
+              />
+            ) : (
+              <input
+                type={field.type}
+                name={field.name}
+                placeholder={field.label}
+                required={field.required}
+                onChange={handleChange}
+                className="border p-2 rounded"
+              />
+            )}
+          </div>
+        ))}
 
         <button
           type="submit"

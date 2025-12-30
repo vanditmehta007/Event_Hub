@@ -9,11 +9,16 @@ const eventUpdateSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    event_name: {
+        type: String,
+        required: false,
+        default: 'General'
+    },
     update_text: {
         type: String,
         required: true
     }
-}, { timestamps: true });  
+}, { timestamps: true });
 
 const EventUpdate = mongoose.model('EventUpdate', eventUpdateSchema);
 module.exports = EventUpdate;
