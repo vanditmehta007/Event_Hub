@@ -35,13 +35,12 @@ const About = () => {
             </span>
           </div>
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight drop-shadow-lg">
-            We don't match <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-teal-400 animate-gradient-x">Profiles</span>.
+            Streamline Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-teal-400 animate-gradient-x">Campus Life</span>.
             <br />
-            We match <span className="italic decoration-wavy underline decoration-cyan-400">Moments</span>.
+            <span className="italic decoration-wavy underline decoration-cyan-400 text-4xl md:text-6xl block mt-4">Connect. Promote. Register.</span>
           </h1>
-          <p className="text-xl text-gray-200 max-w-2xl mx-auto leading-relaxed font-light">
-            Event Hub isn't just a calendar. It's the digital glue holding your campus social life together.
-            No more "Where is it?" or "When was that?". Just pure, unadulterated event bliss.
+          <p className="text-xl text-gray-200 max-w-2xl mx-auto leading-relaxed font-light pt-8">
+            Event_Hub is the <strong className="text-cyan-300">one-stop solution</strong> for college students to PR their club's events, showcase their clubs, and seamlessly register for everything happening on campus.
           </p>
         </div>
 
@@ -68,9 +67,9 @@ const About = () => {
               <div className="min-h-[150px]">
                 {activeTab === 'mission' && (
                   <div className="animate-fadeIn">
-                    <h3 className="text-2xl font-bold mb-4 text-white">Killing the Chaos</h3>
+                    <h3 className="text-2xl font-bold mb-4 text-white">Your Campus, Centralized</h3>
                     <p className="text-cyan-100">
-                      Our mission is simple: <strong>Exterminate conflicts</strong>. We saw students running purely on caffeine and confusion, missing interviews because they were at a club meet. We built Event Hub to be the single source of truth.
+                      Our mission is to bring every club and student together. We help clubs <strong>build their PR</strong> and give students a simple way to <strong>register for events</strong>. Event_Hub is the definitive bridge between you and your campus community.
                     </p>
                   </div>
                 )}
@@ -126,23 +125,33 @@ const About = () => {
         <div className="text-center bg-gradient-to-b from-transparent to-cyan-900/40 rounded-3xl p-12 border border-cyan-900/30 shadow-2xl">
           <h2 className="text-3xl font-bold mb-8">Who is behind this?</h2>
           <div className="flex flex-col items-center">
-            <div className="relative w-32 h-32 mb-6 group cursor-pointer">
+            {/* <div className="relative w-32 h-32 mb-6 group cursor-pointer">
               <div className="absolute inset-0 bg-yellow-400 rounded-full blur-lg opacity-20 group-hover:opacity-50 transition duration-500"></div>
               <div className="relative w-full h-full bg-[#082f49] rounded-full flex items-center justify-center border-2 border-cyan-600 group-hover:border-yellow-400 transition-colors overflow-hidden">
                 <span className="text-6xl group-hover:scale-110 transition-transform duration-300">🦇</span>
               </div>
-            </div>
+            </div> */}
             <h3 className="text-2xl font-bold text-white mb-2">The Developer</h3>
-            <p className="text-cyan-300 font-mono text-sm mb-4">@harveyspecter67</p>
+            <a
+              href="https://github.com/vanditmehta007"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-cyan-300 hover:text-white transition-colors duration-300 font-mono text-sm mb-4 group/link"
+            >
+              <svg className="w-5 h-5 fill-current group-hover/link:scale-110 transition-transform" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.05-.015-2.055-3.33.72-4.035-1.605-4.035-1.605-.54-1.38-1.335-1.755-1.335-1.755-1.087-.75.075-.735.075-.735 1.2.09 1.83 1.245 1.83 1.245 1.065 1.815 2.805 1.29 3.495.99.105-.78.42-1.29.765-1.59-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405 1.02 0 2.04.135 3 .405 2.28-1.545 3.285-1.23 3.285-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.285 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+              </svg>
+              <span>@vanditmehta007</span>
+            </a>
             <p className="text-gray-300 max-w-md mx-auto italic">
-              "I am Batman... 's coding assistant. Okay, mostly just a dev who loves building cool stuff."
+              "Hello, I am Vandit Mehta."
             </p>
           </div>
         </div>
 
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes gradient-x {
           0%, 100% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }

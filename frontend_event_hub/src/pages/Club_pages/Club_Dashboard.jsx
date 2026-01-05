@@ -25,7 +25,7 @@ const DashboardCard = ({ title, children, isLocked = false }) => {
   );
 };
 
-const ApprovalStatusCard = ({ status, hoursRemaining, onResend }) => {
+const ApprovalStatusCard = ({ status, hoursRemaining, onResend, onRefresh }) => {
   const [timeLeft, setTimeLeft] = useState(null);
   const [showSuccess, setShowSuccess] = useState(true);
 
@@ -83,11 +83,30 @@ const ApprovalStatusCard = ({ status, hoursRemaining, onResend }) => {
             ) : (
               <div>
                 <p className="text-red-600 font-semibold mb-3">24-hour timer expired. Resend approval request to admin.</p>
+                <div className="flex gap-4">
+                  <button
+                    onClick={onResend}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-6 rounded-lg transition"
+                  >
+                    Resend Approval Request
+                  </button>
+                  <button
+                    onClick={onRefresh}
+                    className="bg-white border border-yellow-500 text-yellow-600 font-semibold py-2 px-4 rounded-lg hover:bg-yellow-50 transition"
+                  >
+                    Refresh Status
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {hoursRemaining > 0 && (
+              <div className="mt-4">
                 <button
-                  onClick={onResend}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-6 rounded-lg transition"
+                  onClick={onRefresh}
+                  className="bg-white border border-yellow-500 text-yellow-600 font-semibold py-2 px-4 rounded-lg hover:bg-yellow-50 transition text-sm flex items-center gap-2"
                 >
-                  Resend Approval Request
+                  🔄 Check Again
                 </button>
               </div>
             )}
@@ -112,55 +131,60 @@ const Club_Dashboard = () => {
     setEventsRefreshTrigger(prev => prev + 1);
   };
 
-  useEffect(() => {
-    const fetchApprovalStatus = async () => {
-      try {
+  const fetchApprovalStatus = async () => {
+    try {
+      let clubIdToUse = clubId;
 
-        let clubIdToUse = null;
+      if (!clubIdToUse) {
         const clubStr = localStorage.getItem('club');
-        let club = clubStr ? JSON.parse(clubStr) : null;
-
+        const club = clubStr ? JSON.parse(clubStr) : null;
         if (club?.id) {
           clubIdToUse = club.id;
         } else if (user?.id && user?.role === 'club') {
           clubIdToUse = user.id;
-
-          club = {
+          // Sync to localStorage if missing
+          const newClubData = {
             id: user.id,
             cname: user.cname,
             cid: user.cid
           };
-          localStorage.setItem('club', JSON.stringify(club));
+          localStorage.setItem('club', JSON.stringify(newClubData));
         }
+      }
 
-        if (clubIdToUse) {
-          setClubId(clubIdToUse);
-          const response = await axios.post('/club/approval-status', {
-            clubId: clubIdToUse
-          });
+      if (clubIdToUse) {
+        setClubId(clubIdToUse);
+        const response = await axios.post('/club/approval-status', {
+          clubId: clubIdToUse
+        });
 
-          if (response.data.success) {
-            const newStatus = response.data.club.registrationStatus;
-            setApprovalStatus(newStatus);
-            setHoursRemaining(response.data.club.hoursRemaining);
+        if (response.data.success) {
+          const newStatus = response.data.club.registrationStatus;
+          console.log("Fetched Approval Status:", newStatus);
+          setApprovalStatus(newStatus);
+          setHoursRemaining(response.data.club.hoursRemaining);
 
-
-            if (club) {
-              club.registrationStatus = newStatus;
-              localStorage.setItem('club', JSON.stringify(club));
-            }
+          // Update localStorage
+          const clubStr = localStorage.getItem('club');
+          if (clubStr) {
+            const club = JSON.parse(clubStr);
+            club.registrationStatus = newStatus;
+            localStorage.setItem('club', JSON.stringify(club));
           }
         }
-      } catch (error) {
-        console.error('Error fetching approval status:', error);
-      } finally {
-        setIsLoading(false);
+      } else {
+        console.warn("No Club ID found to fetch status.");
       }
-    };
+    } catch (error) {
+      console.error('Error fetching approval status:', error);
+      toast.error("Failed to check approval status.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-
+  useEffect(() => {
     fetchApprovalStatus();
-
     const interval = setInterval(fetchApprovalStatus, 30000);
     return () => clearInterval(interval);
   }, [user, loading]);
@@ -193,6 +217,7 @@ const Club_Dashboard = () => {
             status={approvalStatus}
             hoursRemaining={hoursRemaining}
             onResend={handleResendApproval}
+            onRefresh={fetchApprovalStatus}
           />
         )}
 
