@@ -88,43 +88,14 @@ const userLogin = async (req, res) => {
         const userInDB = await User.findOne({ uemail, usapid });
         if (!userInDB) return res.json({ error: 'No users with these details found, please recheck and try again' })
 
-        // Check if user is approved for registration
-        if (!userInDB.isApproved) {
-            return res.json({ error: 'Your account is pending admin approval. Please wait for the admin to approve your registration.' });
-        }
+
 
         const passwordMatch = await bcrypt.compare(upassword, userInDB.hashedPassword)
         if (!passwordMatch) {
             return res.json({ error: 'Invalid Credentials, please recheck and try again' });
         }
 
-        // Check if user is approved for login
-        if (!userInDB.isApprovedForLogin) {
-            // Create an AdminAuth entry for admin to approve login via dashboard (no email)
-            try {
-                const approvalToken = generateApprovalToken();
-                await AdminAuth.create({
-                    requestType: 'user_login',
-                    userId: userInDB._id,
-                    email: uemail,
-                    name: userInDB.uname,
-                    department: userInDB.udepartment,
-                    requestData: { uemail, usapid },
-                    status: 'pending',
-                    approvalToken: approvalToken,
-                    createdAt: new Date()
-                });
-            } catch (err) {
-                console.log('Error creating admin auth record for login:', err);
-                return res.json({ error: 'Failed to process login. Please try again.' });
-            }
 
-            return res.json({
-                success: false,
-                requiresApproval: true,
-                message: 'Login pending admin approval via dashboard.'
-            });
-        }
 
         const token = jwt.sign(
             {
@@ -191,8 +162,11 @@ const clubReg = async (req, res) => {
         if (!cpassword || cpassword.length < 6) return res.json({ error: '6 character password is required' })
         if (!cid || cid.length < 4) return res.json({ error: 'Numeric 4 digit ID is required' })
 
-        const existClub = await Club.findOne({ cid });
-        if (existClub) return res.json({ error: 'Club with this ID already exists' });
+        const existClub = await Club.findOne({ $or: [{ cid }, { cname }] });
+        if (existClub) {
+            if (existClub.cid === cid) return res.json({ error: 'Club with this ID already exists' });
+            if (existClub.cname === cname) return res.json({ error: 'Club with this Name already exists' });
+        }
 
         const hashedPassword = await bcrypt.hash(cpassword, 10);
 
@@ -519,8 +493,19 @@ const clubLogin = async (req, res) => {
 
 const eventSet = async (req, res) => {
     try {
+        const { token } = req.cookies;
+        if (!token) return res.json({ error: 'Authentication required' });
 
-        const { ename, edate, evenue, etype, ecid, eclub_name, eprmsg } = req.body;
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const club = await Club.findById(decoded.id);
+
+        if (!club || !club.isApproved) {
+            return res.json({ error: 'Club is not approved or authorized to create events.' });
+        }
+
+        const { ename, edate, evenue, etype, eprmsg } = req.body;
+        const ecid = club.cid;
+        const eclub_name = club.cname;
 
         // 2. File info is in req.file. Cloudinary URL is on 'path', public_id is on 'filename'
         if (!req.file) {
@@ -1000,6 +985,10 @@ const resendApprovalRequest = async (req, res) => {
             return res.json({ error: 'Club is already approved' });
         }
 
+        if (club.registrationStatus === 'rejected') {
+            return res.json({ error: 'Registration rejected. Cannot resend request.' });
+        }
+
         // Create a new AdminAuth record and reset the 24-hour timer (no email)
         try {
             const approvalToken = generateApprovalToken();
@@ -1462,7 +1451,7 @@ const switchToClubProfile = async (req, res) => {
 
         // Check Membership
         const isMember = await ClubMember.findOne({
-            club_id: targetClub.cid, // ClubMember schema uses 'cid' string usually
+            club_id: targetClub._id, // ClubMember stores _id, not cid
             $or: [{ sapid: user.usapid }, { email: user.uemail }],
             status: 'approved'
         });
@@ -1532,7 +1521,8 @@ const getUserMemberships = async (req, res) => {
 
         const clubDetails = [];
         for (const membership of memberships) {
-            const club = await Club.findOne({ cid: membership.club_id });
+            // club_id in ClubMember stores the Club's _id, so we must find by ID
+            const club = await Club.findById(membership.club_id);
             if (club) {
                 clubDetails.push({
                     _id: membership._id, // Membership ID
@@ -1562,9 +1552,10 @@ const getAvailableVenues = async (req, res) => {
         const events = await Event.find({ edate: date });
         const bookedVenues = events.map(e => e.evenue);
 
-        const availableVenues = ALL_VENUES.filter(v => !bookedVenues.includes(v));
 
-        return res.json({ success: true, venues: availableVenues });
+
+        // Return all venues and booked ones so frontend can display status
+        return res.json({ success: true, allVenues: ALL_VENUES, bookedVenues });
     } catch (error) {
         console.log(error);
         return res.json({ error: 'Failed to fetch venue availability' });

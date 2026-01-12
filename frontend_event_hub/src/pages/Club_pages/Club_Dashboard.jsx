@@ -9,17 +9,22 @@ import toast from 'react-hot-toast';
 import { UserContext } from '../../context/UserContext';
 
 
-const DashboardCard = ({ title, children, isLocked = false }) => {
+const DashboardCard = ({ title, children, isLocked = true }) => {
   return (
-    <div className={`bg-white p-6 rounded-xl shadow-lg ${isLocked ? 'opacity-50 pointer-events-none relative' : ''}`}>
+    <div className={`bg-white p-6 rounded-xl shadow-lg transition-all duration-300 ${isLocked ? 'relative overflow-hidden' : ''}`}>
       {isLocked && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-10 rounded-xl">
-          <span className="bg-yellow-500 text-white px-4 py-2 rounded-lg font-semibold">Feature Locked</span>
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-gray-100 bg-opacity-60 backdrop-blur-[1px] rounded-xl cursor-not-allowed">
+          <div className="bg-white px-6 py-3 rounded-lg shadow-lg border border-yellow-200 flex items-center gap-2">
+            <span className="text-xl">🔒</span>
+            <span className="text-gray-700 font-medium">Feature Locked</span>
+          </div>
         </div>
       )}
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">{title}</h2>
-      <div className="text-gray-600">
-        {children}
+      <div className={isLocked ? 'opacity-40 pointer-events-none select-none filter blur-[0.5px]' : ''}>
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">{title}</h2>
+        <div className="text-gray-600">
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -63,6 +68,20 @@ const ApprovalStatusCard = ({ status, hoursRemaining, onResend, onRefresh }) => 
           <div>
             <h3 className="text-xl font-bold text-green-700">You have been approved!</h3>
             <p className="text-green-600">Your club registration is approved. All features are now unlocked.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'rejected') {
+    return (
+      <div className="bg-red-50 border-2 border-red-500 p-6 rounded-xl mb-6">
+        <div className="flex items-center gap-4">
+          <div className="text-4xl">❌</div>
+          <div>
+            <h3 className="text-xl font-bold text-red-700">Account Rejected</h3>
+            <p className="text-red-600">Your club registration has been rejected by the administrator.</p>
           </div>
         </div>
       </div>

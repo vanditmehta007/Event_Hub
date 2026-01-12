@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
-
 import axios from 'axios';
-import PaperPlaneAnimation from '../../components/PaperPlaneAnimation';
+import { toast } from 'react-hot-toast';
 
 const Event_RegiForm = ({ event_name }) => {
   const [formConfig, setFormConfig] = useState(null);
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showAnimation, setShowAnimation] = useState(false);
+
   console.log(event_name);
 
   useEffect(() => {
@@ -58,11 +57,12 @@ const Event_RegiForm = ({ event_name }) => {
       });
       console.log(res.data);
       if (res.data.success || res.status === 200) {
-        setShowAnimation(true);
+        toast.success("Successfully Registered!");
+        // Optionally clear form or redirect?? User just said "use toaster for acknowledgement"
       }
     } catch (err) {
       console.error(err);
-      alert("Error submitting form.");
+      toast.error("Error submitting form.");
     }
   };
 
@@ -72,9 +72,7 @@ const Event_RegiForm = ({ event_name }) => {
 
   if (!formConfig || !formConfig.selectedFields) return <p>No form configuration found.</p>;
 
-  if (showAnimation) {
-    return <PaperPlaneAnimation onComplete={() => setShowAnimation(false)} />;
-  }
+  // Removed PaperPlaneAnimation condition
 
   return (
     <div className="p-4 max-w-md mx-auto">

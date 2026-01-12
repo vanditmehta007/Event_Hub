@@ -62,10 +62,15 @@ export default function Register() {
       const { data: responseData } = await axios.post('/cregister', { cname, cdepartment, cpassword, cid, cemail });
       if (responseData.error) {
         toast.error(responseData.error);
-      } else if (responseData.requiresOTP) {
-        setPendingClubId(responseData.cid);
-        setShowOTPModal(true);
-        toast.success('OTP has been sent to the admin email.');
+      } else {
+        // Assume success if no error, even if requiresOTP is false or different. 
+        // Based on previous code, success response includes a message and potentially redirectTo
+        toast.success('Request sent to admin');
+
+        // Wait briefly for toast to be visible then redirect
+        setTimeout(() => {
+          navigate(responseData.redirectTo || '/clubdash');
+        }, 1500);
       }
     } catch (error) {
       console.error('error:', error);

@@ -94,7 +94,7 @@ const EventParticipantsViewer = ({ eventName, onClose }) => {
                 </div>
 
                 <div className="p-4 border-t bg-gray-50 rounded-b-xl flex justify-end">
-                    <button
+                    {/* <button
                         onClick={() => {
                             // Simple CSV export logic could be added here
                             toast('Export feature coming soon!', { icon: '🚧' });
@@ -102,7 +102,7 @@ const EventParticipantsViewer = ({ eventName, onClose }) => {
                         className="mr-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
                     >
                         Export to CSV
-                    </button>
+                    </button> */}
                     <button
                         onClick={onClose}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"

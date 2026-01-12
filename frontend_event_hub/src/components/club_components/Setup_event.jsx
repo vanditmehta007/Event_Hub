@@ -6,7 +6,8 @@ import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom'
 import EventRegiFormCreator from './EventRegiFormCreator';
 import { UserContext } from '../../context/UserContext';
-import PaperPlaneAnimation from '../PaperPlaneAnimation';
+// Removed PaperPlaneAnimation import
+
 function DateForm() {
   const [selectedDate, setSelectedDate] = useState('');
 }
@@ -23,14 +24,16 @@ const Setup_event = () => {
     evenue: '',
     etype: '',
     eprmsg: '',
-    eprmsg: '',
+    // Removed duplicate eprmsg key
   });
 
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   const [isEventCreated, setIsEventCreated] = useState(false);
-  const [showAnimation, setShowAnimation] = useState(false);
-  const [availableVenues, setAvailableVenues] = useState([]);
+  // Removed showAnimation state
+  const [allVenues, setAllVenues] = useState([]);
+  const [bookedVenues, setBookedVenues] = useState([]);
+  // const [availableVenues, setAvailableVenues] = useState([]); // Removed
   const [loadingVenues, setLoadingVenues] = useState(false);
 
   const [file, setFile] = useState(null);
@@ -39,7 +42,8 @@ const Setup_event = () => {
   useEffect(() => {
     const fetchVenues = async () => {
       if (!edata.edate) {
-        setAvailableVenues([]);
+        setAllVenues([]);
+        setBookedVenues([]);
         return;
       }
 
@@ -51,7 +55,8 @@ const Setup_event = () => {
         const res = await axios.post('/venues/available', { date: edata.edate });
 
         if (res.data.success) {
-          setAvailableVenues(res.data.venues);
+          setAllVenues(res.data.allVenues);
+          setBookedVenues(res.data.bookedVenues);
         } else {
           toast.error("Failed to fetch venues");
         }
@@ -66,7 +71,6 @@ const Setup_event = () => {
   }, [edata.edate]);
 
   useEffect(() => {
-
     if (club && club.role === 'club') {
       seteData(prevData => ({
         ...prevData,
@@ -78,6 +82,15 @@ const Setup_event = () => {
 
   const setupevent = async (e) => {
     e.preventDefault();
+
+    if (!edata.evenue) {
+      toast.error('Please select a venue.');
+      return;
+    }
+    if (!edata.etype) {
+      toast.error('Please select an event type.');
+      return;
+    }
 
     if (!file) {
       toast.error('Please upload an event image.');
@@ -93,7 +106,6 @@ const Setup_event = () => {
     formData.append('etype', edata.etype);
     formData.append('eprmsg', edata.eprmsg);
 
-    // const{ename,eclub_name,ecid,edate,evenue,etype,eprmsg} = edata;
     try {
       const { data: responseData } = await axios.post('/createevent', formData, {
         headers: {
@@ -104,8 +116,7 @@ const Setup_event = () => {
         toast.error(responseData.error)
       }
       else {
-        setShowAnimation(true);
-        // seteData({ename: '', edate: '',eclub_name: '',ecid:'', etype: '', evenue: '',eprmsg:''}) // Don't clear yet, need ename for form creator
+        setIsEventCreated(true);
         setFile(null);
         toast.success('Event Created !')
       }
@@ -114,6 +125,7 @@ const Setup_event = () => {
       toast.error(error.response?.data?.error || "Event creation failed");
     }
   }
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -121,6 +133,7 @@ const Setup_event = () => {
   if (!club || club.role !== 'club') {
     return <div>You must be logged in as a club to view this page.</div>
   }
+
   const RadioInput = ({ label, value, checked, onChange }) => (
     <label className="flex items-center gap-2 text-sm text-gray-700">
       <input
@@ -134,18 +147,9 @@ const Setup_event = () => {
       {label}
     </label>
   );
+
   return (
     <div className="flex flex-col gap-6">
-      {showAnimation && (
-        <PaperPlaneAnimation
-          onComplete={() => {
-            setShowAnimation(false);
-            setIsEventCreated(true);
-            if (onEventCreated) onEventCreated();
-          }}
-        />
-      )}
-
       {/* Header / Dropdown Toggle */}
       <button
         onClick={() => setIsFormOpen(!isFormOpen)}
@@ -197,7 +201,7 @@ const Setup_event = () => {
             </div>
           </div>
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Select Venue ({edata.edate ? (loadingVenues ? 'Checking availability...' : 'Available Classrooms') : 'Please select a date first'})</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Select Venue ({edata.edate ? (loadingVenues ? 'Checking availability...' : 'Classroom Availability') : 'Please select a date first'})</label>
 
             {!edata.edate ? (
               <div className="p-4 bg-gray-100 rounded-lg text-gray-500 text-sm text-center border border-gray-200">
@@ -205,30 +209,37 @@ const Setup_event = () => {
               </div>
             ) : loadingVenues ? (
               <div className="p-4 bg-gray-50 rounded-lg text-gray-500 text-sm italic text-center">Loading...</div>
-            ) : availableVenues.length === 0 ? (
+            ) : allVenues.length === 0 ? (
               <div className="p-4 bg-red-50 text-red-600 rounded-lg text-sm text-center border border-red-100">
-                No venues available for this date.
+                No venues found.
               </div>
             ) : (
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                {availableVenues.map((venue) => (
-                  <button
-                    key={venue}
-                    type="button"
-                    onClick={() => seteData({ ...edata, evenue: venue })}
-                    className={`px-2 py-2 text-xs font-semibold rounded-md border transition-all duration-200
-                                    ${edata.evenue === venue
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-md transform scale-105'
-                        : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400 hover:bg-blue-50'}
-                                `}
-                  >
-                    {venue}
-                  </button>
-                ))}
+                {allVenues.map((venue) => {
+                  const isBooked = bookedVenues.includes(venue);
+                  return (
+                    <button
+                      key={venue}
+                      type="button"
+                      disabled={isBooked}
+                      onClick={() => !isBooked && seteData({ ...edata, evenue: venue })}
+                      className={`px-2 py-2 text-xs font-semibold rounded-md border transition-all duration-200
+                                      ${isBooked
+                          ? 'bg-red-100 text-red-400 border-red-200 cursor-not-allowed opacity-70'
+                          : edata.evenue === venue
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-md transform scale-105'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400 hover:bg-blue-50'}
+                                  `}
+                      title={isBooked ? "Venue unavailable" : "Available"}
+                    >
+                      {venue}
+                    </button>
+                  );
+                })}
               </div>
             )}
             {/* Hidden input to ensure HTML5 validation if needed, or handle validation manually in onSubmit */}
-            <input type="text" value={edata.evenue} required className="sr-only" onInvalid={(e) => e.target.setCustomValidity('Please select a venue')} onInput={(e) => e.target.setCustomValidity('')} />
+            {/* Hidden input removed to fix validation sticking issue */}
           </div>
 
 
