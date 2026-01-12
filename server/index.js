@@ -12,7 +12,7 @@ app.use(cookieParser());
 
 //using the below code directly in routes.
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true,
 }));
 
@@ -25,9 +25,15 @@ app.get('/', (req, res) => {
 }
 );
 
-app.use('/', require('./routes/routes'));
+const routes = require('./routes/routes');
+app.use('/', routes);
+app.use('/api', routes);
 
 
 
 const port = 8000;
-app.listen(port, () => console.log('S ON PORT - ', port));
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(port, () => console.log('S ON PORT - ', port));
+}
+
+module.exports = app;
